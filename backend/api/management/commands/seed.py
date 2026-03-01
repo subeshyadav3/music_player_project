@@ -1,3 +1,7 @@
+from curses import meta
+import email
+from os import name
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -132,14 +136,18 @@ class Command(BaseCommand):
 
         def create_artist(name, meta):
             email = f"{name.lower().replace(' ', '')}@music.com"
-            user, _ = User.objects.get_or_create(
-                email=email,
-                defaults={"username": name.replace(" ", "_"), "is_artist": True, "password": "artist123"}
-            )
+            user, created = User.objects.get_or_create(
+            email=email,
+            defaults={"username": name.replace(" ", "_"), "is_artist": True}
+        )
+            if created:
+                user.set_password("artist123") 
+                user.save()
+
             artist, _ = Artist.objects.get_or_create(
                 user=user,
                 stage_name=name,
-                defaults={"country": meta["country"], "description": meta["description"], "verified": True}
+                defaults={"country": meta["country"], "description":    meta["description"], "verified": True}
             )
             return artist
 

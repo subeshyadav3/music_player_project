@@ -11,6 +11,7 @@ Documentation:
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Load environment variables
 load_dotenv()
@@ -131,3 +132,20 @@ STATIC_URL = 'static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+#jwt token settings
+
+SIMPLE_JWT = {
+    # Access token lifetime: how long the token for API calls is valid
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # <-- change to 60 minutes (1 hour)
+    
+    # Refresh token lifetime: how long you can get a new access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # <-- change to 7 days
+    
+    # Optional: if you want sliding tokens
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    
+    # Algorithm, signing key etc. (usually leave defaults)
+}

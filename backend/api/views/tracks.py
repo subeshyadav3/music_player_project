@@ -15,14 +15,13 @@ class TrackViewSet(viewsets.ModelViewSet):
     def play(self, request, pk=None):
         track = self.get_object()
 
-        # Increment stats total_plays atomically
+     
         track_stat, created = TrackStat.objects.get_or_create(track=track)
         TrackStat.objects.filter(id=track_stat.id).update(total_plays=F('total_plays') + 1)
 
-        # Create play history record
+  
         PlayHistory.objects.create(user=request.user, track=track)
 
-        # Refresh from db to get updated value
         track_stat.refresh_from_db()
 
         return Response({"status": "played", "total_plays": track_stat.total_plays}, status=status.HTTP_200_OK)

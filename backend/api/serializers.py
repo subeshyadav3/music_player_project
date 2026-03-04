@@ -4,7 +4,7 @@ from .models import (
     User, Artist, Album, Track, Playlist, PlaylistTrack,
     TrackLike, Favorite, FavoritePlaylist, FavoriteArtist,
     PlayHistory, Genre, TrackGenre, TrackStat,
-    TrendingTrack, Notification, UserFollow
+    TrendingTrack, Notification, UserFollow,    
 )
 
 # -------------------- User Serializers --------------------
@@ -27,11 +27,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 class UserSerializer(serializers.ModelSerializer):
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'is_artist', 'bio', 'profile_image', 'account_status', 'created_at')
-        read_only_fields = ['id', 'created_at']
+        fields = (
+            'id', 'username', 'email', 'is_artist', 'bio', 
+            'profile_image', 'account_status', 'created_at',
+            'followers_count', 'following_count'
+        )
+        read_only_fields = ['id', 'created_at', 'followers_count', 'following_count']
 
+    def get_followers_count(self, obj):
+        return UserFollow.objects.filter(following=obj).count()
+
+    def get_following_count(self, obj):
+        return UserFollow.objects.filter(follower=obj).count()
+    
 # -------------------- Artist Serializer --------------------
 
 class ArtistSerializer(serializers.ModelSerializer):

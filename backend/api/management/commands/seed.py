@@ -1,15 +1,14 @@
-from curses import meta
-import email
-from os import name
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from api.models import (
+    Artist, Album, Track, Genre, TrackGenre, TrackStat, Playlist, PlaylistTrack,
+    Favorite, FavoriteArtist, FavoritePlaylist, PlayHistory, TrackLike, TrendingTrack,
+    Notification, UserFollow
+)
 from random import randint, choice, sample
-from api.models import Artist, Album, Track, Genre, TrackGenre, TrackStat, Playlist, PlaylistTrack, Favorite, FavoriteArtist, FavoritePlaylist, PlayHistory, TrackLike, TrendingTrack, Notification, UserFollow
-import datetime
-import random 
 from decimal import Decimal
+from datetime import timedelta
 
 User = get_user_model()
 
@@ -116,6 +115,35 @@ TRACKS = [
     ("Neha Kakkar", "Party Mix", "O Saki Saki", 230, "Hindi", "hindi_20.mp3"),
 ]
 
+def create_artist(artist_name, artist_meta):
+    user_email = f"{artist_name.lower().replace(' ', '')}@music.com"
+    user, created = User.objects.get_or_create(
+        email=user_email,
+        defaults={"username": artist_name.replace(" ", "_"), "is_artist": True}
+    )
+    if created:
+        user.set_password("artist123")
+        user.save()
+
+    artist, _ = Artist.objects.get_or_create(
+        user=user,
+        stage_name=artist_name,
+        defaults={
+            "country": artist_meta["country"],
+            "description": artist_meta["description"],
+            "verified": True
+        }
+    )
+    return artist
+
+def human_playlist_name(user, idx):
+    themes = ["Chill", "Party", "Hits", "Romantic", "Workout", "Focus"]
+    return f"{user.username}'s {choice(themes)} Playlist {idx+1}"
+
+def album_title_clean(title):
+    # Capitalize nicely
+    return title.title()
+
 # -------------------------------
 # Command
 # -------------------------------
@@ -125,171 +153,151 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write("Deleting old data...")
 
-        # Clear tables (keep music seed intact)
-        Notification.objects.all().delete()
-        TrendingTrack.objects.all().delete()
-        TrackStat.objects.all().delete()
-        TrackGenre.objects.all().delete()
-        PlayHistory.objects.all().delete()
-        TrackLike.objects.all().delete()
-        Favorite.objects.all().delete()
-        FavoriteArtist.objects.all().delete()
-        FavoritePlaylist.objects.all().delete()
-        PlaylistTrack.objects.all().delete()
-        Playlist.objects.all().delete()
-        Track.objects.all().delete()
-        Album.objects.all().delete()
-        Artist.objects.all().delete()
-        Genre.objects.all().delete()
-        # Delete non-staff users only
+        # Clear all tables except Users/staff
+        models_to_clear = [
+            Notification, TrendingTrack, TrackStat, TrackGenre, PlayHistory,
+            TrackLike, Favorite, FavoriteArtist, FavoritePlaylist,
+            PlaylistTrack, Playlist, Track, Album, Artist, Genre
+        ]
+        for m in models_to_clear:
+            m.objects.all().delete()
         User.objects.filter(is_staff=False).delete()
 
         self.stdout.write("Creating genres...")
-        genre_objs = {}
-        for g in GENRES:
-            genre_objs[g], _ = Genre.objects.get_or_create(name=g)
-
-        # -------------------------------
-        # Helper: Create artist and user
-        # -------------------------------
-        def create_artist(artist_name, artist_meta):
-            user_email = f"{artist_name.lower().replace(' ', '')}@music.com"
-            user, created = User.objects.get_or_create(
-                email=user_email,
-                defaults={"username": artist_name.replace(" ", "_"), "is_artist": True}
-            )
-            if created:
-                user.set_password("artist123") 
-                user.save()
-
-            artist, _ = Artist.objects.get_or_create(
-                user=user,
-                stage_name=artist_name,
-                defaults={"country": artist_meta["country"], "description": artist_meta["description"], "verified": True}
-            )
-            return artist
+        genre_objs = {g: Genre.objects.get_or_create(name=g)[0] for g in GENRES}
 
         # -------------------------------
         # Seed tracks
         # -------------------------------
-        def seed_tracks():
-            for artist_name, album_title, track_title, duration, language, file_name in TRACKS:
-                artist = create_artist(artist_name, ARTISTS[artist_name])
-
-                album, _ = Album.objects.get_or_create(
-                    artist=artist,
-                    title=album_title
-                )
-
-                track, _ = Track.objects.get_or_create(
-                    artist=artist,
-                    album=album,
-                    title=track_title,
-                    defaults={
-                        "audio_url": f"tracks/{file_name}",
-                        "duration": duration,
-                    }
-                )
-
-                # Assign random genre
-                genre_name = choice(GENRES)
-                TrackGenre.objects.get_or_create(track=track, genre=genre_objs[genre_name])
-
-                # Create track stats
-                TrackStat.objects.get_or_create(
-                    track=track,
-                    defaults={
-                        "total_plays": randint(1000, 100000),
-                        "weekly_plays": randint(100, 5000),
-                        "monthly_plays": randint(500, 20000),
-                        "total_likes": randint(50, 5000),
-                        "last_played_at": timezone.now()
-                    }
-                )
-
         self.stdout.write("Seeding tracks...")
-        seed_tracks()
-        self.stdout.write(self.style.SUCCESS("✅ Music tracks seeded successfully"))
-
-        # -------------------------------
-        # Seed auxiliary data
-        # -------------------------------
-        self.stdout.write("Seeding auxiliary data...")
-
-        # 1. Create additional users
-        extra_usernames = [f"user{i}" for i in range(1, 21)]
-        extra_users = []
-        for uname in extra_usernames:
-            u, created = User.objects.get_or_create(
-                username=uname,
-                defaults={"email": f"{uname}@example.com"}
+        track_objs = []
+        for artist_name, album_title, track_title, duration, language, file_name in TRACKS:
+            artist = create_artist(artist_name, ARTISTS[artist_name])
+            album, _ = Album.objects.get_or_create(artist=artist, title=album_title_clean(album_title))
+            track, _ = Track.objects.get_or_create(
+                artist=artist,
+                album=album,
+                title=track_title,
+                defaults={"audio_url": f"tracks/{file_name}", "duration": duration}
             )
+
+            # Assign genre
+            genre = choice(GENRES)
+            TrackGenre.objects.get_or_create(track=track, genre=genre_objs[genre])
+
+            # Seed TrackStat with zero initially (will update after PlayHistory)
+            TrackStat.objects.get_or_create(
+                track=track,
+                defaults={"weekly_plays": 0, "monthly_plays": 0, "total_plays": 0,
+                          "total_likes": 0, "last_played_at": timezone.now()}
+            )
+
+            track_objs.append(track)
+
+        self.stdout.write(self.style.SUCCESS("✅ Tracks seeded successfully"))
+
+        # -------------------------------
+        # Create extra users
+        # -------------------------------
+        extra_users = []
+        for i in range(1, 21):
+            uname = f"user{i}"
+            u, created = User.objects.get_or_create(username=uname, defaults={"email": f"{uname}@example.com"})
             if created:
                 u.set_password("user123")
                 u.save()
             extra_users.append(u)
 
-        # 2. Create playlists for users
-        all_tracks = list(Track.objects.all())
-        playlist_objs = []
-        for u in extra_users:
-            for _ in range(randint(1, 3)):
-                p = Playlist.objects.create(
-                    user=u,
-                    name=f"{u.username}_playlist_{randint(1,100)}"
-                )
-                selected_tracks = sample(all_tracks, randint(3, 8))
+        # -------------------------------
+        # Seed PlayHistory, Likes, Favorites
+        # -------------------------------
+        self.stdout.write("Seeding PlayHistory, Likes, Favorites...")
+        now = timezone.now()
+        for track in track_objs:
+            # Simulate 50-200 plays per track
+            play_count = randint(50, 200)
+            for _ in range(play_count):
+                user = choice(extra_users)
+                played_at = now - timedelta(days=randint(0, 90))
+                PlayHistory.objects.create(user=user, track=track, played_at=played_at)
+
+            # Likes
+            liked_users = sample(extra_users, randint(5, min(10, len(extra_users))))
+            for u in liked_users:
+                TrackLike.objects.get_or_create(user=u, track=track)
+
+        # Favorites
+        playlists = []
+        for user in extra_users:
+            for idx in range(randint(1, 3)):
+                p = Playlist.objects.create(user=user, name=human_playlist_name(user, idx))
+                selected_tracks = sample(track_objs, randint(5, 10))
                 for t in selected_tracks:
                     PlaylistTrack.objects.create(playlist=p, track=t)
-                playlist_objs.append(p)
+                playlists.append(p)
 
-        # 3. Create favorites (tracks, playlists, artists)
-        artists = list(Artist.objects.all())
-        for u in extra_users:
-            for t in sample(all_tracks, randint(2, 5)):
-                Favorite.objects.get_or_create(user=u, track=t)
-            for p in sample(playlist_objs, randint(1, 3)):
-                FavoritePlaylist.objects.get_or_create(user=u, playlist=p)
-            for a in sample(artists, randint(1, 3)):
-                FavoriteArtist.objects.get_or_create(user=u, artist=a)
+            # Favorite tracks, artists, playlists
+            for t in sample(track_objs, randint(3, 6)):
+                Favorite.objects.get_or_create(user=user, track=t)
+            for a in sample([t.artist for t in track_objs], randint(2, 4)):
+                FavoriteArtist.objects.get_or_create(user=user, artist=a)
+            for p in sample(playlists, randint(1, 2)):
+                FavoritePlaylist.objects.get_or_create(user=user, playlist=p)
 
-        # 4. Play history
-        for _ in range(200):
-            PlayHistory.objects.create(
-                user=choice(extra_users),
-                track=choice(all_tracks),
-                played_at=timezone.now() - datetime.timedelta(days=randint(0, 90))
+        # -------------------------------
+        # Update TrackStats
+        # -------------------------------
+        self.stdout.write("Updating TrackStats...")
+        for track in track_objs:
+
+            weekly = randint(1000, 50000)
+            monthly = randint(weekly, 200000)
+            total = randint(monthly, 1000000)
+            total_likes = randint(50, 5000)
+
+            TrackStat.objects.update_or_create(
+                track=track,
+                defaults={
+                    "weekly_plays": weekly,
+                    "monthly_plays": monthly,
+                    "total_plays": total,
+                    "total_likes": total_likes,
+                    "last_played_at": timezone.now()
+                }
             )
 
-        # 5. Likes & update stats
-        for t in all_tracks:
-            liked_users = sample(extra_users, randint(2, 6))
-            for u in liked_users:
-                TrackLike.objects.get_or_create(user=u, track=t)
-            stat = TrackStat.objects.get(track=t)
-            stat.total_likes = TrackLike.objects.filter(track=t).count()
-            stat.total_plays = PlayHistory.objects.filter(track=t).count()
-            stat.save()
-
-        # 6. Notifications
-        # Your model uses 'type', not 'message'
+        # -------------------------------
+        # Notifications
+        # -------------------------------
         notif_types = ["New track", "Like", "Follow", "System"]
-        for u in extra_users:
+        for user in extra_users:
             for _ in range(randint(5, 10)):
                 Notification.objects.create(
-                    user=u,
+                    user=user,
                     type=choice(notif_types),
-                    created_at=timezone.now() - datetime.timedelta(days=randint(0, 30))
+                    created_at=now - timedelta(days=randint(0, 30))
                 )
 
-        # 7. Trending tracks
+        # -------------------------------
+        # Trending tracks
+        # -------------------------------
         periods = ["weekly", "monthly"]
-        for t in all_tracks:
+        for track in track_objs:
             for period in periods:
                 TrendingTrack.objects.get_or_create(
-                    track=t,
+                    track=track,
                     period=period,
                     defaults={"trend_score": Decimal(randint(50, 1000))}
                 )
+
+        # -------------------------------
+        # Following relationships
+        # -------------------------------
+        self.stdout.write("Seeding follows...")
+        for user in extra_users:
+            followees = sample(extra_users, randint(3, 7))
+            for followee in followees:
+                if followee != user:
+                    UserFollow.objects.get_or_create(follower=user, following=followee)
 
         self.stdout.write(self.style.SUCCESS("✅ Auxiliary data seeded successfully!"))

@@ -11,6 +11,19 @@ class TrackViewSet(viewsets.ModelViewSet):
     serializer_class = TrackSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    @action(detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated])
+    def favorites(self, request):
+        favorites = Favorite.objects.filter(user=request.user).select_related(
+            "track",
+            "track__artist",
+            "track__album",
+            "track__trackstat",
+        )
+
+        tracks = [fav.track for fav in favorites]
+        serializer = self.get_serializer(tracks, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def play(self, request, pk=None):
         track = self.get_object()

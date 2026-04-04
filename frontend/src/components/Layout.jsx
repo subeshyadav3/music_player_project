@@ -7,6 +7,8 @@ import {
   Music,
   SquareLibrary,
   UserRound,
+  Heart,
+  Wrench,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -18,7 +20,9 @@ const navItems = [
   { to: '/artists', icon: Mic2, label: 'Artists' },
   { to: '/albums', icon: Disc3, label: 'Albums' },
   { to: '/playlists', icon: SquareLibrary, label: 'Playlists' },
+  { to: '/favorites', icon: Heart, label: 'Favorites' },
   { to: '/library', icon: Library, label: 'Library' },
+  { to: '/manage', icon: Wrench, label: 'Manage' },
   { to: '/profile', icon: UserRound, label: 'Profile' },
 ]
 

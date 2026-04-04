@@ -12,6 +12,11 @@ import ArtistsPage from './pages/ArtistsPage'
 import PlaylistsPage from './pages/PlaylistsPage'
 import SearchPage from './pages/SearchPage'
 import NotificationsPage from './pages/NotificationsPage'
+import FavoritesPage from './pages/FavoritesPage'
+import ManagePage from './pages/ManagePage'
+import TrackDetailPage from './pages/TrackDetailPage'
+import ArtistDetailPage from './pages/ArtistDetailPage'
+import AlbumDetailPage from './pages/AlbumDetailPage'
 import { useAuth } from './contexts/AuthContext'
 
 function App() {
@@ -46,11 +51,16 @@ function App() {
       >
         <Route index element={<HomePage />} />
         <Route path="artists" element={<ArtistsPage />} />
+        <Route path="artists/:id" element={<ArtistDetailPage />} />
         <Route path="albums" element={<AlbumsPage />} />
+        <Route path="albums/:id" element={<AlbumDetailPage />} />
+        <Route path="tracks/:id" element={<TrackDetailPage />} />
         <Route path="playlists" element={<PlaylistsPage />} />
+        <Route path="favorites" element={<FavoritesPage />} />
         <Route path="library" element={<LibraryPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="manage" element={<ManagePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
 

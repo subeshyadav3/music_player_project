@@ -5,4 +5,9 @@ const getArtists = async () => {
   return normalizeListResponse(response.data)
 }
 
-export { getArtists }
+const getArtist = async (id) => {
+  const response = await apiClient.get(`/artists/${id}/`)
+  return response.data
+}
+
+export { getArtists, getArtist }

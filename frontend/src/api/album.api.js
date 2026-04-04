@@ -8,4 +8,9 @@ const getAlbums = async () => {
 const createAlbum = (formData) =>
   apiClient.post('/albums/', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 
-export { getAlbums, createAlbum }
+const getAlbum = async (id) => {
+  const response = await apiClient.get(`/albums/${id}/`)
+  return response.data
+}
+
+export { getAlbums, getAlbum, createAlbum }

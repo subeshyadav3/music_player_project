@@ -5,6 +5,11 @@ const getTracks = async () => {
   return normalizeListResponse(response.data)
 }
 
+const getTrack = async (id) => {
+  const response = await apiClient.get(`/tracks/${id}/`)
+  return response.data
+}
+
 const getTrendingTracks = async (period = 'week', limit = 8) => {
   const response = await apiClient.get(`/trending/?period=${period}&limit=${limit}`)
   return normalizeListResponse(response.data)
@@ -23,6 +28,7 @@ const createTrack = (formData) =>
 
 export {
   getTracks,
+  getTrack,
   getTrendingTracks,
   playTrackRequest,
   favoriteTrack,

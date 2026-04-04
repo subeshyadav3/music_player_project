@@ -27,17 +27,29 @@ class TrackViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def play(self, request, pk=None):
         track = self.get_object()
+        now = timezone.now()
 
-     
-        track_stat, created = TrackStat.objects.get_or_create(track=track)
-        TrackStat.objects.filter(id=track_stat.id).update(total_plays=F('total_plays') + 1)
+        
+        track_stat, _ = TrackStat.objects.get_or_create(track=track)
+        TrackStat.objects.filter(id=track_stat.id).update(total_plays=F('total_plays') + 1,
+                                                        last_played_at=now)
 
-  
-        PlayHistory.objects.create(user=request.user, track=track)
+        # Record the play
+        PlayHistory.objects.create(user=request.user, track=track, played_at=now)
+
+       
+        weekly = PlayHistory.objects.filter(track=track, played_at__gte=now - timedelta(days=7)).count()
+        monthly = PlayHistory.objects.filter(track=track, played_at__gte=now - timedelta(days=30)).count()
+
+        TrackStat.objects.filter(id=track_stat.id).update(weekly_plays=weekly, monthly_plays=monthly)
 
         track_stat.refresh_from_db()
-
-        return Response({"status": "played", "total_plays": track_stat.total_plays}, status=status.HTTP_200_OK)
+        return Response({
+            "status": "played",
+            "total_plays": track_stat.total_plays,
+            "weekly_plays": track_stat.weekly_plays,
+            "monthly_plays": track_stat.monthly_plays
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], permission_classes=[permissions.IsAuthenticated])
     def favorite(self, request, pk=None):

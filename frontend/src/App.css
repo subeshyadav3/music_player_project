@@ -191,7 +191,7 @@
 
 .content-wrap {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   min-height: 100vh;
 }
 
@@ -240,6 +240,7 @@
 
 .page-content {
   padding: 1.25rem;
+  padding-bottom: 5rem; /* space for fixed player bar */
   overflow-y: auto;
 }
 
@@ -332,6 +333,21 @@
   gap: 0.35rem;
 }
 
+.player-bar {
+  position: fixed;
+  left: 260px; /* width of sidebar */
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(12, 13, 22, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.6rem 1.2rem;
+}
+
+.player-bar.empty-player {
+  justify-content: center;
+}
+
 .album-card small,
 .artist-card small,
 .playlist-card small {
@@ -360,6 +376,58 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.form-card {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.form-card h3 {
+  margin: 0 0 0.3rem;
+}
+
+.form-card label {
+  display: grid;
+  gap: 0.3rem;
+  color: #d8dbf0;
+}
+
+.form-card input,
+.form-card select {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.status-pill {
+  border-radius: 12px;
+  padding: 0.45rem 0.65rem;
+  width: fit-content;
+}
+
+.status-pill.success {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: #c0f1c4;
+}
+
+.status-pill.error {
+  background: rgba(255, 107, 107, 0.16);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #ffc2c2;
 }
 
 .player-bar {
@@ -455,6 +523,72 @@
 
 .followers-wrap small {
   color: #b9bedf;
+}
+
+.track-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: center;
+}
+
+.track-hero-image {
+  width: 160px;
+  height: 160px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.track-hero-info .eyebrow {
+  margin: 0 0 0.3rem;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: #a5aad5;
+}
+
+.track-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.5rem 0 0.9rem;
+  color: #c8cbdf;
+}
+
+.track-hero-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.track-hero-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.artist-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  color: #c8cbdf;
+}
+
+.artist-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.simple-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.3rem 0 0.6rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.simple-list a {
+  color: #dce1ff;
 }
 
 @media (max-width: 1060px) {

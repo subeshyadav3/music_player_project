@@ -37,7 +37,7 @@ function PlayerBar() {
       return
     }
 
-    player.src = toMediaUrl(currentTrack.audio_url)
+    player.src = 'http://127.0.0.1:8000/media/tracks/default.mp3'
     player
       .play()
       .then(async () => {

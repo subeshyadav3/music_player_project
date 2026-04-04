@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { getTracks, getTrendingTracks } from '../api/track.api'
+import { getFavoriteTracks, getTracks, getTrendingTracks } from '../api/track.api'
 import { getAlbums } from '../api/album.api'
 import { getArtists } from '../api/artist.api'
 
@@ -11,6 +11,7 @@ export function HomeDataProvider({ children }) {
   const [albums, setAlbums] = useState([])
   const [artists, setArtists] = useState([])
   const [loading, setLoading] = useState(true)
+  const [favoriteTracks, setFavoriteTracks] = useState([])
 
   useEffect(() => {
     let mounted = true
@@ -18,12 +19,14 @@ export function HomeDataProvider({ children }) {
     const loadData = async () => {
       setLoading(true)
       try {
-        const [tracksData, trendingData, albumsData, artistsData] = await Promise.all([
-          getTracks(),
-          getTrendingTracks('week', 8),
-          getAlbums(),
-          getArtists(),
-        ])
+        const [tracksData, trendingData, albumsData, artistsData, favoritesData] =
+          await Promise.all([
+            getTracks(),
+            getTrendingTracks('week', 8),
+            getAlbums(),
+            getArtists(),
+            getFavoriteTracks().catch(() => []),
+          ])
 
         if (!mounted) {
           return
@@ -33,6 +36,7 @@ export function HomeDataProvider({ children }) {
         setTrendingTracks(trendingData)
         setAlbums(albumsData)
         setArtists(artistsData)
+        setFavoriteTracks(favoritesData)
       } finally {
         if (mounted) {
           setLoading(false)
@@ -48,8 +52,8 @@ export function HomeDataProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ tracks, trendingTracks, albums, artists, loading }),
-    [tracks, trendingTracks, albums, artists, loading],
+    () => ({ tracks, trendingTracks, albums, artists, favoriteTracks, loading }),
+    [tracks, trendingTracks, albums, artists, favoriteTracks, loading],
   )
 
   return <HomeDataContext.Provider value={value}>{children}</HomeDataContext.Provider>

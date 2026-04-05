@@ -24,13 +24,24 @@ function PlayerBar() {
   useEffect(() => {
     const player = audioRef.current
     if (!player || !currentTrack) return
-    player.src = 'http://127.0.0.1:8000/media/tracks/default.mp3'
+    
+    // Try track's actual audio file first, fall back to default.mp3
+    const trackAudioUrl = toMediaUrl(currentTrack.audio_url)
+    const defaultUrl = 'http://127.0.0.1:8000/media/tracks/default.mp3'
+    
+    player.src = trackAudioUrl || defaultUrl
     player.play().then(async () => {
       if (playedTrackRef.current !== currentTrack.id) {
         playedTrackRef.current = currentTrack.id
         try { await playTrackRequest(currentTrack.id) } catch {}
       }
-    }).catch(() => {})
+    }).catch(() => {
+      // If track audio fails, use default
+      if (player.src !== defaultUrl) {
+        player.src = defaultUrl
+        player.play().catch(() => {})
+      }
+    })
   }, [currentTrack])
 
   useEffect(() => {
@@ -56,6 +67,13 @@ function PlayerBar() {
         onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
         onEnded={playNext}
+        onError={() => {
+          // Fallback to default if audio load fails
+          if (audioRef.current && !audioRef.current.src.includes('default.mp3')) {
+            audioRef.current.src = 'http://127.0.0.1:8000/media/tracks/default.mp3'
+            audioRef.current.play().catch(() => {})
+          }
+        }}
       />
 
       {!currentTrack ? (

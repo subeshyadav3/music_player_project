@@ -12,34 +12,77 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
-
-# Load environment variables
-load_dotenv()
+from urllib.parse import urlparse, parse_qs
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def load_environment_files():
+    default_env_path = BASE_DIR / '.env'
+    load_dotenv(default_env_path)
+
+    app_env = os.getenv('APP_ENV', os.getenv('DJANGO_ENV', 'local')).lower()
+    if app_env in {'prod', 'production'}:
+        env_path = BASE_DIR / '.env.prod'
+    else:
+        env_path = BASE_DIR / '.env.local'
+
+    load_dotenv(env_path, override=True)
+
+
+def parse_database_url(database_url):
+    parsed = urlparse(database_url)
+    query = parse_qs(parsed.query)
+
+    options = {}
+    if query.get('sslmode'):
+        options['sslmode'] = query['sslmode'][0]
+    if query.get('channel_binding'):
+        options['channel_binding'] = query['channel_binding'][0]
+
+    config = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': str(parsed.port or 5432),
+    }
+
+    if options:
+        config['OPTIONS'] = options
+
+    return config
+
+
+load_environment_files()
 
 # SECURITY
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
 
 # DATABASE
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+database_url = os.getenv('DATABASE_URL', '').strip()
+if database_url:
+    DATABASES = {
+        'default': parse_database_url(database_url)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = [
-    os.getenv('FRONTEND_URL'),
-]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv('FRONTEND_URL', 'http://localhost:5173').split(',') if origin.strip()]
 
 # INSTALLED APPS
 INSTALLED_APPS = [
@@ -137,15 +180,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 #jwt token settings
 
 SIMPLE_JWT = {
-    # Access token lifetime: how long the token for API calls is valid
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # <-- change to 60 minutes (1 hour)
+
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     
-    # Refresh token lifetime: how long you can get a new access token
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # <-- change to 7 days
+
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), 
     
-    # Optional: if you want sliding tokens
+
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-    
-    # Algorithm, signing key etc. (usually leave defaults)
+
 }

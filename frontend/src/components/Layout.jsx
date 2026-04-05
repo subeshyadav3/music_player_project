@@ -1,31 +1,26 @@
 import {
-  Disc3,
-  Home,
-  ListMusic,
-  Library,
-  LogOut,
-  Mic2,
-  Music,
-  SquareLibrary,
-  UserRound,
-  Heart,
-  Wrench,
+  Disc3, Home, ListMusic, Library, LogOut,
+  Mic2, Music, SquareLibrary, UserRound, Heart, Wrench, Bell,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import PlayerBar from './PlayerBar'
-import Topbar from './Topbar'
+import '../App.css'
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Discover' },
-  { to: '/tracks', icon: ListMusic, label: 'Tracks' },
-  { to: '/artists', icon: Mic2, label: 'Artists' },
-  { to: '/albums', icon: Disc3, label: 'Albums' },
-  { to: '/playlists', icon: SquareLibrary, label: 'Playlists' },
-  { to: '/favorites', icon: Heart, label: 'Favorites' },
-  { to: '/library', icon: Library, label: 'Library' },
-  { to: '/manage', icon: Wrench, label: 'Manage' },
-  { to: '/profile', icon: UserRound, label: 'Profile' },
+  { to: '/',           icon: Home,         label: 'Discover'   },
+  { to: '/tracks',     icon: ListMusic,    label: 'Tracks'     },
+  { to: '/artists',    icon: Mic2,         label: 'Artists'    },
+  { to: '/albums',     icon: Disc3,        label: 'Albums'     },
+  { to: '/playlists',  icon: SquareLibrary,label: 'Playlists'  },
+  { to: '/favorites',  icon: Heart,        label: 'Favorites'  },
+  { to: '/library',    icon: Library,      label: 'Library'    },
+]
+
+const bottomItems = [
+  { to: '/notifications', icon: Bell,       label: 'Notifications' },
+  { to: '/manage',        icon: Wrench,     label: 'Manage'        },
+  { to: '/profile',       icon: UserRound,  label: 'Profile'       },
 ]
 
 function Layout() {
@@ -34,41 +29,64 @@ function Layout() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">
-          <Music size={24} />
-          <div>
+
+        {/* Brand */}
+        <div className="sidebar-brand">
+          <div className="sidebar-brand__icon"><Music size={18} /></div>
+          <div className="sidebar-brand__text">
             <h1>BeatBox</h1>
-            <p>Music Player</p>
           </div>
         </div>
 
-        <nav className="nav-links">
+        {/* Main nav */}
+        <nav className="sidebar-nav">
+          <span className="sidebar-nav__label">Menu</span>
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) =>
-                `nav-item ${isActive ? 'active-nav' : ''}`
-              }
+              end={to === '/'}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
             >
-              <Icon size={18} />
+              <Icon size={16} />
               <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="sidebar-user">
-          <p className="sidebar-user-name">{user?.username || 'Guest User'}</p>
-          <small className="sidebar-user-email">{user?.email || 'No email'}</small>
-          <button type="button" onClick={logout} className="ghost-btn logout-btn">
-            <LogOut size={16} />
-            Logout
+        <div className="sidebar-divider" />
+
+        {/* Bottom nav */}
+        <nav className="sidebar-nav">
+          <span className="sidebar-nav__label">Account</span>
+          {bottomItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link--active' : ''}`}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* User footer */}
+        <div className="sidebar-footer">
+          <div className="sidebar-footer__avatar">
+            {user?.username?.[0]?.toUpperCase() || 'G'}
+          </div>
+          <div className="sidebar-footer__info">
+            <strong>{user?.username || 'Guest'}</strong>
+            <small>{user?.email || ''}</small>
+          </div>
+          <button type="button" className="sidebar-footer__logout" onClick={logout} aria-label="Logout">
+            <LogOut size={14} />
           </button>
         </div>
       </aside>
 
       <div className="content-wrap">
-        <Topbar />
         <main className="page-content">
           <Outlet />
         </main>

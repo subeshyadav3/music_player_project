@@ -2,71 +2,64 @@ import { useMemo, useState } from 'react'
 import { ListMusic, Search } from 'lucide-react'
 import TrackCard from '../components/TrackCard'
 import { useHomeData } from '../state/useHomeData'
+import '../App.css'
 
 function TracksPage() {
   const { tracks, loading } = useHomeData()
   const [search, setSearch] = useState('')
 
   const filteredTracks = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    if (!query) {
-      return tracks
-    }
-
-    return tracks.filter((track) => {
-      const title = track.title?.toLowerCase() || ''
-      const artist = track.artist_name?.toLowerCase() || ''
-      const album = track.album_title?.toLowerCase() || ''
-      return title.includes(query) || artist.includes(query) || album.includes(query)
-    })
+    const q = search.trim().toLowerCase()
+    if (!q) return tracks
+    return tracks.filter((t) =>
+      [t.title, t.artist_name, t.album_title].some((v) => v?.toLowerCase().includes(q))
+    )
   }, [tracks, search])
 
   return (
-    <section className="page-section">
-      <header className="page-header">
-        <div>
+    <section className="tracks-page">
+      <header className="tracks-page__header">
+        <div className="tracks-page__header-left">
           <h2>Tracks</h2>
-          <p>Browse all tracks in your music catalog.</p>
+          {!loading && (
+            <span className="favorites-page__count">{filteredTracks.length} songs</span>
+          )}
         </div>
-        <label className="search-box">
-          <Search size={16} />
+        <label className="tracks-search">
+          <Search size={13} />
           <input
             type="search"
-            placeholder="Search by title, artist or album"
+            placeholder="Search title, artist or album…"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </label>
       </header>
 
-      <div className="section-title all-tracks-title">
-        <h3>
-          <ListMusic size={16} />
-          All tracks
-        </h3>
-        <span>{filteredTracks.length} songs</span>
-      </div>
-
-      {loading ? <p>Loading tracks...</p> : null}
-
-      {!loading ? (
-        <div className="track-grid">
-          {filteredTracks.length ? (
-            filteredTracks.map((track, index) => (
-              <TrackCard
-                key={track.id}
-                track={track}
-                tracks={filteredTracks}
-                index={index}
-              />
-            ))
-          ) : (
-            <div className="empty-card">
-              <p>No tracks matched your search.</p>
+      {loading ? (
+        <div className="fav-grid">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div className="pl-skeleton" key={i}>
+              <div className="pl-skeleton-art" />
+              <div className="pl-skeleton-body">
+                <div className="pl-skeleton-line" style={{ width: '70%' }} />
+                <div className="pl-skeleton-line" style={{ width: '45%' }} />
+              </div>
             </div>
-          )}
+          ))}
         </div>
-      ) : null}
+      ) : filteredTracks.length ? (
+        <div className="fav-grid">
+          {filteredTracks.map((track, index) => (
+            <TrackCard key={track.id} track={track} tracks={filteredTracks} index={index} />
+          ))}
+        </div>
+      ) : (
+        <div className="fav-empty">
+          <div className="fav-empty__icon"><ListMusic size={22} /></div>
+          <p>No tracks matched your search.</p>
+        </div>
+      )}
     </section>
   )
 }

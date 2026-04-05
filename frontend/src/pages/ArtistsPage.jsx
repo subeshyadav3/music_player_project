@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Users } from 'lucide-react'
 import { getArtists } from '../api/artist.api'
 import ArtistCard from '../components/ArtistCard'
+import '../App.css'
 
 function ArtistsPage() {
   const [artists, setArtists] = useState([])
@@ -9,44 +11,44 @@ function ArtistsPage() {
   useEffect(() => {
     let mounted = true
     getArtists()
-      .then((data) => {
-        if (mounted) {
-          setArtists(data)
-        }
-      })
-      .finally(() => {
-        if (mounted) {
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      mounted = false
-    }
+      .then((data) => { if (mounted) setArtists(data) })
+      .finally(() => { if (mounted) setLoading(false) })
+    return () => { mounted = false }
   }, [])
 
   return (
-    <section className="page-section">
-      <header className="page-header">
-        <div>
+    <section className="tracks-page">
+      <header className="tracks-page__header">
+        <div className="tracks-page__header-left">
           <h2>Artists</h2>
-          <p>Discover artist profiles, verification status, and catalog size.</p>
+          {!loading && (
+            <span className="favorites-page__count">{artists.length} artists</span>
+          )}
         </div>
-        <span className="header-count">{artists.length} artists</span>
       </header>
 
-      {loading ? <p>Loading artists...</p> : null}
-      <div className="card-grid">
-        {artists.length ? (
-          artists.map((artist) => <ArtistCard key={artist.id} artist={artist} />)
-        ) : (
-          !loading && (
-            <div className="empty-card">
-              <p>No artists found.</p>
+      {loading ? (
+        <div className="fav-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div className="pl-skeleton" key={i}>
+              <div className="pl-skeleton-art" style={{ borderRadius: '50%' }} />
+              <div className="pl-skeleton-body">
+                <div className="pl-skeleton-line" style={{ width: '60%' }} />
+                <div className="pl-skeleton-line" style={{ width: '35%' }} />
+              </div>
             </div>
-          )
-        )}
-      </div>
+          ))}
+        </div>
+      ) : artists.length ? (
+        <div className="fav-grid">
+          {artists.map((artist) => <ArtistCard key={artist.id} artist={artist} />)}
+        </div>
+      ) : (
+        <div className="fav-empty">
+          <div className="fav-empty__icon"><Users size={22} /></div>
+          <p>No artists found.</p>
+        </div>
+      )}
     </section>
   )
 }

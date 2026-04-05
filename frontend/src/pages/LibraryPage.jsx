@@ -3,6 +3,7 @@ import { BookMarked } from 'lucide-react'
 import { apiClient, normalizeListResponse } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
 import PlaylistCard from '../components/PlaylistCard'
+import '../App.css'
 
 function LibraryPage() {
   const { user } = useAuth()
@@ -12,62 +13,66 @@ function LibraryPage() {
 
   useEffect(() => {
     let mounted = true
-
     const fetchPlaylists = async () => {
-      setLoading(true)
-      setError('')
-
+      setLoading(true); setError('')
       try {
         const response = await apiClient.get('/playlists/')
-        if (mounted) {
-          setPlaylists(normalizeListResponse(response.data))
-        }
+        if (mounted) setPlaylists(normalizeListResponse(response.data))
       } catch {
-        if (mounted) {
-          setError('Unable to load playlists right now.')
-        }
+        if (mounted) setError('Unable to load playlists right now.')
       } finally {
-        if (mounted) {
-          setLoading(false)
-        }
+        if (mounted) setLoading(false)
       }
     }
-
     fetchPlaylists()
-
-    return () => {
-      mounted = false
-    }
+    return () => { mounted = false }
   }, [])
 
   const myPlaylists = useMemo(
-    () => playlists.filter((playlist) => playlist.user?.id === user?.id),
+    () => playlists.filter((p) => p.user?.id === user?.id),
     [playlists, user?.id],
   )
 
   return (
-    <section className="page-section">
-      <header className="page-header">
-        <div>
+    <section className="tracks-page">
+      <header className="tracks-page__header">
+        <div className="tracks-page__header-left">
           <h2>Your Library</h2>
-          <p>Playlists created in your account.</p>
+          {!loading && !error && (
+            <span className="favorites-page__count">{myPlaylists.length} playlists</span>
+          )}
         </div>
-        <span className="header-count">{myPlaylists.length} playlists</span>
       </header>
 
-      {loading ? <p>Loading playlists...</p> : null}
-      {error ? <p className="form-error">{error}</p> : null}
+      {error && (
+        <div className="manage-toast manage-toast--error" style={{ marginBottom: 24 }}>
+          <span className="manage-toast__dot" />
+          {error}
+        </div>
+      )}
 
-      {!loading && !error ? (
-        <div className="playlist-list">
-          {myPlaylists.length === 0 ? (
-            <div className="empty-card">
-              <BookMarked size={18} />
-              <p>You do not have playlists yet.</p>
+      {loading ? (
+        <div className="fav-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div className="pl-skeleton" key={i}>
+              <div className="pl-skeleton-art" />
+              <div className="pl-skeleton-body">
+                <div className="pl-skeleton-line" style={{ width: '65%' }} />
+                <div className="pl-skeleton-line" style={{ width: '40%' }} />
+              </div>
             </div>
-          ) : (
-            myPlaylists.map((playlist) => <PlaylistCard key={playlist.id} playlist={playlist} />)
-          )}
+          ))}
+        </div>
+      ) : myPlaylists.length ? (
+        <div className="fav-grid">
+          {myPlaylists.map((playlist) => (
+            <PlaylistCard key={playlist.id} playlist={playlist} />
+          ))}
+        </div>
+      ) : !error ? (
+        <div className="fav-empty">
+          <div className="fav-empty__icon"><BookMarked size={22} /></div>
+          <p>You don't have any playlists yet.</p>
         </div>
       ) : null}
     </section>

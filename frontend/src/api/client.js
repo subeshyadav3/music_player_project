@@ -41,7 +41,7 @@ const requestTokenRefresh = async () => {
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 100000,
 })
 
 apiClient.interceptors.request.use((config) => {

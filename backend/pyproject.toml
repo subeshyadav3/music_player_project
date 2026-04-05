@@ -1,8 +1,10 @@
 [project]
 name = "backend"
 version = "0.1.0"
+
 dependencies = [
   "Django>=4.2,<5.0",
+  "asgiref>=3.7,<4.0",
   "djangorestframework",
   "django-cors-headers",
   "django-redis",

@@ -3,6 +3,7 @@
 A fully normalized relational database design for a **Music Streaming Platform**, implemented using **Django ORM** with a **PostgreSQL** backend.  
 This project models real-world systems like Spotify, focusing on **data integrity, scalability, and analytical capability**.
 
+
 ---
 
 ## 📌 Project Overview
@@ -14,6 +15,45 @@ This project demonstrates the complete lifecycle of database system design:
 - Normalization up to **Third Normal Form (3NF)**
 - Implementation using Django + PostgreSQL
 - Complex SQL query execution
+
+In this repository, there are **two practical implementations**:
+
+1. **Music Player Full Stack**
+	- `backend/` → Django REST API for auth, artists, tracks, albums, playlists, favorites, trending, stats, etc.
+	- `frontend/` → React (Vite) client for the music player UI and playback experience.
+
+2. **DBMS Query Visualization Full Stack**
+	- `dbms/` → Separate Django project/app used to run and visualize database queries through a dashboard.
+
+---
+
+## 🗂️ Project Structure
+
+```text
+music_player/
+├── backend/                  # Django REST backend for music player
+│   ├── api/                  # API app: models, serializers, views, urls, seed command
+│   ├── config/               # Django project configuration
+│   ├── media/                # Uploaded media (tracks, covers, profiles)
+│   ├── manage.py
+│   └── pyproject.toml
+├── frontend/                 # React + Vite frontend for music player
+│   ├── public/
+│   ├── src/
+│   │   ├── api/              # API clients
+│   │   ├── components/       # Reusable UI components
+│   │   ├── contexts/         # Auth and player contexts
+│   │   ├── pages/            # Route pages
+│   │   ├── state/            # Home data state management
+│   │   └── utils/
+│   └── package.json
+├── dbms/                     # Separate full-stack module for DBMS query visualization
+│   ├── dbms/                 # Django project settings
+│   ├── queries/              # Query app + templates/dashboard
+│   ├── db.sqlite3
+│   └── manage.py
+└── readme.md
+```
 
 ---
 
@@ -136,3 +176,5 @@ The database is normalized to:
 - django-cors-headers
 
 ---
+
+
